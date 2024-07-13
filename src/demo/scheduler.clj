@@ -17,41 +17,48 @@
 ;;     #time/instant "2024-07-07T21:36:14.200075828Z")
 
 
-(let [n (t/now)
-      nl (t/long n)
-      f (t/>> n (t/new-duration 1 :seconds))
-      fl (t/long f)]
-  (- fl nl))
-; t/long difference is in seconds
+(def seq1  (periodic-seq
+               (t/now)
+               (t/new-duration 5 :seconds)))
 
+(def  input (m/seed seq1))
 
-(defn scheduler 
+(def scheduler 
   "returns a missionary flow"
-  [seq]
-  (let [input (m/seed seq)]
-    (m/ap
+   (m/ap
      (let [next-time (m/?> input)
            time (t/now)
            diff (- (t/long next-time) (t/long time))
            diff-ms (* 1000 diff)]
-       (println "scheduler sleeping for seconds: " diff " until: " next-time)
-       (if (> diff 0)
-         (do (m/? (m/sleep diff-ms next-time))
+       (println "scheduler sleeping for ms: " diff-ms " until: " next-time)
+       (if (> diff-ms 0)
+         (do (println "sleeping ms" diff-ms)
+             (m/? (m/sleep diff-ms next-time))
              (println "finished sleeping")
              next-time)
-         (println "schedule was from the past: " next-time))))))
+         (do (println "schedule was from the past: " next-time)
+             :past
+             )))))
 
 ; reduce a fixed size flow
+(m/? (m/reduce println nil scheduler))
 
-(let [seq (take 3 (every-5-seconds))
-      s (scheduler seq)]
-  (m/? (m/reduce conj s)))
+
+
+
+
+
+
+(comment 
+
 ;; you need to wait 15 seconds after evaling !!
 ;; => [nil
-;;     #time/instant "2024-07-07T17:06:53.900328228Z"
-;;     #time/instant "2024-07-07T17:06:55.900328228Z"
-;;     #time/instant "2024-07-07T17:06:57.900328228Z"
-;;     #time/instant "2024-07-07T17:06:59.900328228Z"]
+; scheduler sleeping for seconds:  0  until:  #time/instant "2024-07-11T23:55:33.260644629Z"
+; schedule was from the past:  #time/instant "2024-07-11T23:55:33.260644629Z"
+; scheduler sleeping for seconds:  5  until:  #time/instant "2024-07-11T23:55:38.260644629Z"
+[:past 
+ #time/instant "2024-07-11T23:55:38.260644629Z" 
+ #time/instant "2024-07-11T23:55:43.260644629Z"]
 
 
 ; process 10 events (takes 50 seconds)
@@ -83,6 +90,5 @@
    (range 5)
   )
 
-
-
-scheduler
+;
+)
