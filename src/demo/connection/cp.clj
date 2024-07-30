@@ -1,4 +1,4 @@
-(ns demo.conn2
+(ns demo.connection.cp
   (:require
    [nano-id.core :refer [nano-id]]
    [missionary.core :as m]))
