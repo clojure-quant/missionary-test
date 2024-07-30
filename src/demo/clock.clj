@@ -2,13 +2,16 @@
   (:require
    [missionary.core :as m]))
 
+
+
 (def >clock    ;; A shared process emitting `nil` every second.
   (m/stream
    (m/ap
+    (println "creating clock!")
     (loop [i 0]
       (m/amb
-       (m/? (m/sleep 1000))
-       (println "i: " i)
+       (m/? (m/sleep 1000 i))
+       ;(println "i: " i)
        (recur (inc i)))))))
 
 
@@ -21,7 +24,8 @@
  prn prn)
 
 
-
+(m/?
+ (m/reduce conj [] (m/eduction (take 3) >clock)))
 
 
  ;; After 4 seconds, prints [3 4]
