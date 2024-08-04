@@ -26,10 +26,9 @@
           (m/? (m/sleep 1))
           (m/? (m/reduce conj [] (m/eduction (take 2) >conn)))))
  )
+;; => [["60Jb"] ["TO0J" "sdAK"] ["TO0J" "sdAK"]]
 
-;; #### creating conn
-; #### re-connecting .. 
-; [["cK8P" "Qdl3"] ["cK8P" "Qdl3"] ["cK8P" "Qdl3"]]
+
 
 (defn take-first-non-nil [f]
   ; flows dont implement deref
