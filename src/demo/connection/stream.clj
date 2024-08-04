@@ -1,6 +1,8 @@
-(ns demo.stream
+(ns demo.connection.stream
   (:require
-   [missionary.core :as m])
+   [missionary.core :as m]
+     [nano-id.core :refer [nano-id]]
+   )
   )
 
 
@@ -33,3 +35,23 @@
       (m/signal (m/seed [nil nil nil 1 2 3]))))
 ;; => 3
 
+
+(def >conn
+  (m/signal
+   (m/ap
+    (println "#### creating conn")
+    (loop [c (nano-id 4)]
+      (m/amb
+       c
+       (do (m/? (m/sleep 10000 c))
+           (println "#### re-connecting .. ")
+           (recur (nano-id 4))))))))
+
+
+(m/? (current-v >conn))
+
+(m/?
+  (m/join vector (current-v >conn)
+                 (m/sleep 1000 (m/? (current-v >conn)))
+                 (current-v >conn)
+          ))
