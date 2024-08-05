@@ -27,8 +27,8 @@
   (m/signal poll-conn))
 
 (m/? (m/join vector
-             (m/reduce conj [] (m/eduction (take 1) conn))
              (m/reduce conj [] (m/eduction (take 2) conn))
+             (m/reduce conj [] (m/eduction (take 1) conn))
              (m/reduce conj [] (m/eduction (take 2) conn))
              (m/reduce conj [] (m/eduction (take 2) conn))
              (m/reduce conj [] (m/eduction (take 2) conn))
