@@ -16,8 +16,9 @@
 (defn rdv-flow [rdv]
   (forever rdv))
 
-(comment
-  (def rdv (m/rdv))
-  (def cancel (print-call (print-drain (rdv-flow rdv))))
-  (m/? (rdv "val 1")) ;; prints nil val 1, blocks until flow is ready to accept new value
-  (cancel))
+
+(def rdv (m/rdv))
+(def cancel (print-call (print-drain (rdv-flow rdv))))
+(m/? (rdv "val 1"))
+;; prints nil val 1, blocks until flow is ready to accept new value
+(cancel)
