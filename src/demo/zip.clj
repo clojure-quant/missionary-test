@@ -11,6 +11,7 @@
 
 (def a (m/seed (range 3)) )
 (def b (m/seed [:a :b :c :d :e :f]))
+(def c (m/seed (range 10)))
 
 (def z (m/zip vector a b))
 
@@ -24,5 +25,13 @@
 (fprint z)
 
 (fprint (mix a b))
+
+(fprint (mix a b c))
+
+(fprint (m/zip vector a b c))
+
+
+
+
 
 
