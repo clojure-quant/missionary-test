@@ -32,6 +32,23 @@
 
 
 
+(defn forever [task]
+  (m/ap (m/? (m/?> (m/seed (repeat task))))))
+
+(defn flow-or-nil [f]
+  (let [next-v  ;(m/reduce (fn [r v] v) nil (m/eduction (take 1) f))
+                (m/reduce conj [] (m/eduction (take 2) f))
+        nil-t (m/sp :ttt)
+        value-t (m/race  next-v nil-t
+                        )]
+    (forever value-t)
+        
+        )
+  
+  )
+
+(fprint (m/zip vector (flow-or-nil a) b ))
+
 
 
 
