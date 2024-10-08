@@ -1,64 +1,30 @@
 (ns demo.batch-combiner
    (:require [missionary.core :as m]))
 
+;; data-producer
+
+(defn data-producer [max-delay-ms]
+  (m/ap
+   (loop [i 0]
+     (m/amb
+      (m/? (m/sleep (rand-int max-delay-ms) i))
+      (recur (inc i))))))
+
+(def producer-slow (data-producer 200))
+(def producer-fast (data-producer 30))
+
+
+;; data-consumer
+
 (defn forever [task]
   (m/ap (m/? (m/?> (m/seed (repeat task))))))
-
-;; dataproducer slow
-
-(def a-t
-  (m/sp  (let [r (rand-int 100)]
-           (m/? (m/sleep r r)))))
-
-(def a-f
-  ; produces data with different frequencies
-  (m/ap (m/?> (forever a-t))))
-
-; dataproducer fast
-
-(def b-t
-  (m/sp  (let [r (rand-int 20)]
-           (m/? (m/sleep r r)))))
-
-(def b-f 
-  ; produces data with different frequencies
-  (m/ap (m/?> (forever b-t))))
-
-
-;; combiner task
 
 (def c-t
   (m/sp (m/? (m/sleep 50 :c))))
 
-(def c-f
+(def consumer-f
   ; gets run in regular intervals
   (m/ap (m/?> (forever c-t))))
-
-
-
-(m/? (->> b-f
-          (m/eduction 
-           (take 5))
-          (m/reduce conj)
-          ))
-
-(m/? (->> a-f
-          (m/eduction
-           (take 2))
-          (m/reduce conj)))
-
-
-(m/? (->> (m/zip vector a-f b-f c-f)
-          (m/eduction 
-             (take 3))
-          (m/reduce conj)
-      ))
-
-;; => [[35 0 :c] [53 11 :c] [10 9 :c]]
-
-;; problem with this is that b and a need to be
-;; synced, and when we read c we want all 
-;; values of a and all values of b.
 
 (defn batch-combiner [r v]
   (if (vector? r)
@@ -69,13 +35,14 @@
   (m/reductions (fn [r v]
                 (if v v r)) nil f))
 
-(def a-f-batched (m/relieve batch-combiner a-f))
+(def producer-slow-batched (m/relieve batch-combiner producer-slow))
 
-(def b-f-batched (m/relieve batch-combiner b-f))
+(def producer-fast-batched (m/relieve batch-combiner producer-fast))
 
-(m/? (->> (m/zip vector c-f 
-                 (f-or-nil2 a-f-batched )
-                 b-f-batched)
+(m/? (->> (m/zip vector 
+                 (f-or-nil2 producer-slow-batched )
+                 producer-fast-batched
+                 consumer-f)
           (m/eduction
            (take 20))
           (m/reduce conj)))
@@ -85,48 +52,41 @@
 ;; is included with nil. this is ok. 
 ;; but for all subsequent rows it would block until a is available.
 
-;; => [[:c nil [9 16 18 1]]
-;;     [:c 96 [9 2 8 18 17]]
-;;     [:c 94 [6 19 6 16 10 16 14]]
-;;     [:c 83 [4 2 6 0 11 12 4 5 13 15 1]]
-;;     [:c 51 [17 17 18 2 0]]
-;;     [:c 6 11]
-;;     [:c 76 [0 6 14 6 19 1 18]]
-;;     [:c 12 [16 8]]
-;;     [:c 64 [12 4 14 6 10]]
-;;     [:c 92 [16 0 6 6 19 4 4 17 7 13 11]]
-;;     [:c 84 [15 8 17 5 4 15 5 9]]
-;;     [:c 72 [18 0 12 16 15 11]]
-;;     [:c 74 [19 5 7 8 13 13]]
-;;     [:c 74 [16 5 18 2 8 8 17]]
-;;     [:c 49 [15 11 11 13 5]]
-;;     [:c 68 [15 16 0 16 6 0 13 0]]
-;;     [:c 67 [15 2 16 1 9 15 3]]
-;;     [:c 37 [15 3 5 15]]
-;;     [:c 70 [13 19 8 6 6 19]]
-;;     [:c 62 [17 14 5 16 7 2]]]
+;; => [[nil [0 1 2 3 4] :c]
+;;     [0 [5 6 7 8 9 10 11 12 13] :c]
+;;     [1 [14 15] :c]
+;;     [2 [16 17 18 19 20 21 22 23 24 25 26 27 28 29] :c]
+;;     [3 [30 31 32 33 34 35 36 37 38] :c]
+;;     [4 [39 40 41 42 43 44 45 46 47] :c]
+;;     [5 [48 49] :c]
+;;     [6 [50 51 52 53 54 55 56 57 58] :c]
+;;     [7 [59 60] :c]
+;;     [8 [61 62 63 64 65 66] :c]
+;;     [9 [67 68 69 70 71 72 73 74 75 76 77 78] :c]
+;;     [10 [79 80 81 82] :c]
+;;     [11 [83 84 85 86 87 88 89 90 91 92 93 94 95 96] :c]
+;;     [12 97 :c]
+;;     [13 [98 99 100 101 102 103 104 105 106 107] :c]
+;;     [14 [108 109 110] :c]
+;;     [15 [111 112 113] :c]
+;;     [16 114 :c]
+;;     [17 [115 116 117] :c]
+;;     [18 [118 119 120 121 122 123 124 125 126 127 128 129] :c]]
 
 (defn sleep-emit [delays]
   (m/ap (let [n (m/?> (m/seed delays))]
-        (m/? (m/sleep n n)))))
-
-(def clock 
-   (m/ap
-    (loop [i 0]
-      (m/amb
-       (m/? (m/sleep (rand-int 100) i))
-       (recur (inc i))))))
-
-(def clock-batched (m/relieve batch-combiner clock))
+        (m/? (m/sleep n :c)))))
 
 (m/? (->> (m/sample vector
-                    (m/reductions {} :nil clock-batched)
-                    (m/reductions {} :nil clock-batched)
+                    (m/reductions {} :nil producer-slow-batched)
+                    (m/reductions {} :nil producer-fast-batched)
                     (sleep-emit [100 50 30 20 100 4
                                  100 50 30 20 100 4
                                  100 50 30 20 100 4
-                                 ]))
-             (m/reduce conj)))
+                                 ])
+                    ;consumer-f
+                    )
+           (m/reduce conj)))
 
 ;; this is almost what we want.
 ;; we get the values batched that occured in the sampled
@@ -134,21 +94,21 @@
 ;; repetition of the prior value. for discrete transation
 ;; processors not optimal.
 
-;; => [[0 [0 1] 100]
-;;     [1 [0 1] 50]
-;;     [1 2 30]
-;;     [1 2 20]
-;;     [[2 3 4] [3 4 5 6] 100]
-;;     [[2 3 4] [3 4 5 6] 4]
-;;     [[5 6] 7 100]
-;;     [[7 8] [8 9] 50]
-;;     [[7 8] [8 9] 30]
-;;     [[7 8] 10 20]
-;;     [[9 10 11] [11 12 13] 100]
-;;     [[9 10 11] [11 12 13] 4]
-;;     [[12 13 14 15 16] [14 15 16 17 18] 100]
-;;     [[17 18 19] [14 15 16 17 18] 50]
-;;     [[17 18 19] 19 30]
-;;     [[17 18 19] 19 20]
-;;     [20 20 100]
-;;     [20 20 4]]
+;; => [[0 [0 1 2 3 4 5] :c]
+;;     [0 [6 7 8] :c]
+;;     [0 [9 10 11] :c]
+;;     [0 [9 10 11] :c]
+;;     [1 [12 13 14 15 16 17 18 19 20] :c]
+;;     [1 [12 13 14 15 16 17 18 19 20] :c]
+;;     [2 [21 22 23 24 25 26 27] :c]
+;;     [2 [28 29 30] :c]
+;;     [3 31 :c]
+;;     [3 32 :c]
+;;     [4 [33 34 35 36 37 38 39 40] :c]
+;;     [4 41 :c]
+;;     [4 [42 43 44 45] :c]
+;;     [5 [46 47] :c]
+;;     [5 [48 49 50] :c]
+;;     [5 51 :c]
+;;     [5 [52 53 54 55 56 57 58 59] :c]
+;;     [5 60 :c]]
