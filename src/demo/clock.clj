@@ -1,18 +1,8 @@
 (ns demo.clock
   (:require
-   [missionary.core :as m]))
+   [missionary.core :as m]
+   [demo.flows.clock :refer [>clock]]))
 
-
-
-(def >clock    ;; A shared process emitting `nil` every second.
-  (m/stream
-   (m/ap
-    (println "creating clock!")
-    (loop [i 0]
-      (m/amb
-       (m/? (m/sleep 1000 i))
-       ;(println "i: " i)
-       (recur (inc i)))))))
 
 
 (defn counter [r _] (inc r)) 
