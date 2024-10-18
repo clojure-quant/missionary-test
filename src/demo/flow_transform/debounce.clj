@@ -1,4 +1,4 @@
-(ns demo.debounce
+(ns demo.flow-transform.debounce
   (:require [missionary.core :as m])
   (:import missionary.Cancelled))
 

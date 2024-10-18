@@ -1,4 +1,4 @@
-(ns demo.filter
+(ns demo.flow-transform.filter
   (:require 
     [missionary.core :as m]))
 
@@ -18,9 +18,8 @@
 (recur (m/amb))
 
 
+(m/amb :3)
+; m/amb one arg is identity
 
 
-
-
-m/amb one arg is identity
 

@@ -1,4 +1,4 @@
-(ns demo.rendevouz
+(ns demo.message.rendevouz
    (:require
     [missionary.core :as m]))
   
@@ -20,7 +20,8 @@
     (loop [r i]
       (let [x (m/? take)]
         (if (identical? x take)
-          r (recur (rf r x))))))) 
+          r 
+          (recur (rf r x))))))) 
 
 (defn iterator [give xs]
   (m/sp
@@ -30,11 +31,23 @@
             (recur xs))
         (m/? (give give))))))
 
+;; example synchronous
+
+(reduce + 0 (range 100))
+;; => 4950
+
+; example async
+
 (def stream (m/rdv))
 
 (m/? (m/join {} 
              (iterator stream (range 100))
              (reducer + 0 stream)))
-;; returns 4950
+;; => 4950
 
-(reduce + 0 (range 100))
+(m/? (m/join vector
+             (iterator stream (range 100))
+             (reducer + 0 stream)))
+;; => [nil 4950]
+
+

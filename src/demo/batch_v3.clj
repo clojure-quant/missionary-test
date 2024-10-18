@@ -1,18 +1,11 @@
 (ns demo.batch-v3
   (:require
    [missionary.core :as m]
-   [demo.flows.producer :refer [data-producer]]))
+   [demo.flows.producer :refer [data-producer]]
+   [demo.flows.timebuffered :refer [time-buffered]]
+   ))
 
 (defn mix [& flows] (m/ap (m/?> (m/?> (count flows) (m/seed flows)))))
-
-(defn time-buffered [duration-ms flow]
-  (m/ap
-   (let [restartable (second (m/?> (m/group-by {} flow)))]
-     (m/? (->> (m/ap (m/amb= (m/?> restartable)
-                             (m/? (m/sleep duration-ms ::end))))
-               (m/eduction (take-while #(not= % ::end)))
-               (m/reduce conj))))))
-
 
 (def producer-slow (data-producer 200))
 (def producer-fast (data-producer 30))
@@ -31,5 +24,21 @@
 
 ((->> (time-buffered 50 (mix producer-slow producer-fast))
       (m/eduction (take 20))
+      (m/reduce conj))
+ prn prn)
+
+(def main (m/seed [:a :b :C]))
+
+(defn time-buffered2 [duration-ms flow]
+  (m/ap
+   (let [restartable (second (m/?> (m/group-by {} flow)))]
+     (m/? (->> (m/ap (m/amb= (m/?> restartable)
+                             (m/?> main)
+                             (m/? (m/sleep duration-ms ::end))))
+               (m/eduction (take-while #(not= % ::end)))
+               (m/reduce conj))))))
+
+((->> (time-buffered2 50 producer-fast)
+      (m/eduction (take 3))
       (m/reduce conj))
  prn prn)
