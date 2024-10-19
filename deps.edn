@@ -27,6 +27,15 @@
                  ;"--middleware" "[cider.nrepl/cider-middleware,refactor-nrepl.middleware/wrap-refactor]"
                "--middleware " "[cider.nrepl/cider-middleware]"
                ]}
+  
+ :lint
+{:extra-deps {clj-kondo/clj-kondo {:mvn/version "2024.09.27"}}
+ :main-opts ["-m" "clj-kondo.main"
+             ; "--config" ".clj-kondo.edn"
+             "--fail-level" "error"
+             "--lint"
+             "./src"
+             ]}
 
 ;
   }}
