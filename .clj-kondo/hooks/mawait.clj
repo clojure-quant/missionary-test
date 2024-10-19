@@ -7,6 +7,6 @@
                          (= 'ap (:name %))) 
                     ; #(and  (= 'clojure.core (:ns %)))
                  cs)
-      (throw (ex-info "You should use m/? inside m/sp" {})))))
+      (throw (ex-info "m/? is allowed only inside m/sp or m/ap" {})))))
 
 
