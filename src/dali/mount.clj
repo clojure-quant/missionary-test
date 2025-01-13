@@ -34,15 +34,14 @@
            (println "child already existing: " child))
          )))))
 
-(defn mount [parent-el {:keys [tag id value child-f]}]
+(defn mount [parent-el {:keys [tag id value-f child-f]}]
   (println "mounting: " tag " " id)
   (let [this-el (if (= tag :text)
-                  (dom/create-text value)
+                  (dom/create-text)
                   (dom/create-element tag))
         this  {:parent-el parent-el
                :id id
                :tag tag
-               :value value
                :this-el this-el
                :childrens (atom {})}
         child-update-t (m/reduce 
@@ -50,58 +49,34 @@
                            (println "children update: " children)
                            (sync-children this children)
                            nil)
-                         nil child-f)]
+                         nil child-f)
+        value-update-t (when value-f 
+                  (m/reduce
+                     (fn [_r text]
+                          (println "text update: " text)
+                          (dom/change-text this-el text)
+                          nil)
+                        nil value-f))]
     (dom/append-child parent-el this-el)
     (assoc this 
             :child-t (child-update-t
                      #(println "mount children task completed: " %)
-                     #(println "mount children task crashed: " %)))))
+                     #(println "mount children task crashed: " %))
+            :value-t (when value-update-t
+                       (value-update-t
+                        #(println "value-update task completed: " %)
+                        #(println "value-update task crashed: " %))
+                       )
+           )))
 
-(defn unmount [{:keys [parent-el id tag this-el child-t childrens] :as opts}]
+(defn unmount [{:keys [parent-el id tag this-el child-t value-t childrens] :as opts}]
   (println "unmounting opts: " opts)
   (println "unmounting: " tag " " id " parent-el: " parent-el)
   (if child-t 
      (child-t) ; stop the child-task  
      (println "error: child-task is nil"))
+  (if value-t
+    (value-t) ; stop the value-task  
+    (println "error: value-task is nil"))
   (doall (map unmount (vals @childrens)))
   (dom/remove-child parent-el this-el))
-
-
-(def body (dom/create-element :div))
-
-body
-
-(def p-hello {:tag :p
-              :id 1
-              :child-f (m/seed [])})
-
-(def t-bye {:tag :text
-            :id 5
-            :value "bye"
-            :child-f (m/seed [])})
-
-(def p-goodbye {:tag :span
-                :id 2
-                :child-f (m/seed [[t-bye]])})
-
-
-(def p-bye {:tag :p
-            :id 3
-            :child-f (m/seed [[p-goodbye]])})
-
-(def div-main {:tag :div
-               :id 4
-               :child-f (m/seed [[p-hello] [p-bye]])
-               })
-
-
-
-(def system (mount body div-main))
-system
-
-(dom/to-hiccup body)
-;; => [:div [:div [:p [:span]]]]
-
-(unmount system)
-
-(dom/to-hiccup body)
