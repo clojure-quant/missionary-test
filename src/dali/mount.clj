@@ -4,11 +4,6 @@
    [missionary.core :as m]
    [dali.dom :as dom]))
 
-(defonce max-id (atom 0))
-
-(defn create-id []
-  (swap! max-id inc))
-
 (declare mount)
 (declare unmount)
 

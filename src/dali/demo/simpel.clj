@@ -31,13 +31,13 @@ body
                :id 4
                :child-f (m/seed [[p-hello] [p-bye]])})
 
-(def system (mount body div-main))
-system
+(def app (mount body div-main))
+app
 
 (dom/to-hiccup body)
 ;; => [:div [:div [:p [:span "bye"]]]]
 
-(unmount system)
+(unmount app)
 
 (dom/to-hiccup body)
 ;; => [:div]
