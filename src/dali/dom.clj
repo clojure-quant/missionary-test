@@ -6,8 +6,14 @@
 
 (defn create-element [tag]
   ; document.createElement('div');
+  ; document.createTextNode ('hello');
   {:tag tag
    :children (atom [])})
+
+(defn create-text [text]
+  {:tag :text
+   :children (atom [])
+   :value text})
 
 (defn append-child [parent-el child-el]
   ; document.body.appendChild(divElement);
@@ -23,9 +29,8 @@
     (reset! (:children parent-el) ex-child)))
 
 
-(defn to-hiccup [{:keys [tag children]}]
-  (into [tag ]
-        (map to-hiccup @children)
-        )
-  
-  )
+(defn to-hiccup [{:keys [tag children value]}]
+  (if (= tag :text)
+    value
+    (into [tag]
+       (map to-hiccup @children))))

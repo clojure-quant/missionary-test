@@ -34,12 +34,15 @@
            (println "child already existing: " child))
          )))))
 
-(defn mount [parent-el {:keys [tag id child-f]}]
+(defn mount [parent-el {:keys [tag id value child-f]}]
   (println "mounting: " tag " " id)
-  (let [this-el (dom/create-element tag)
+  (let [this-el (if (= tag :text)
+                  (dom/create-text value)
+                  (dom/create-element tag))
         this  {:parent-el parent-el
                :id id
                :tag tag
+               :value value
                :this-el this-el
                :childrens (atom {})}
         child-update-t (m/reduce 
@@ -72,9 +75,15 @@ body
               :id 1
               :child-f (m/seed [])})
 
+(def t-bye {:tag :text
+            :id 5
+            :value "bye"
+            :child-f (m/seed [])})
+
 (def p-goodbye {:tag :span
                 :id 2
-                :child-f (m/seed [])})
+                :child-f (m/seed [[t-bye]])})
+
 
 (def p-bye {:tag :p
             :id 3
