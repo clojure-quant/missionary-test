@@ -1,7 +1,5 @@
 (ns dali.dom)
 
-; pElement.textContent = 'hello';
-
 ;; IDENTICAL TO DOM
 
 (defn create-element [tag]

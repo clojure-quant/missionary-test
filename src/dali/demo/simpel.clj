@@ -41,3 +41,8 @@ system
 
 (dom/to-hiccup body)
 ;; => [:div]
+
+
+; (div 
+;   (text "hello"))
+
