@@ -1,0 +1,7 @@
+{:deps {missionary/missionary {:mvn/version "b.47"}}
+ :paths ["src"]
+ :tasks
+ {:requires ([bb.demo1 :refer [demo1!]])
+  demo1 {:doc "missionary sp smoke test"
+         :task (demo1!)}
+  }}
