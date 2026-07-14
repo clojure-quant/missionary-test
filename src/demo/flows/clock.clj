@@ -21,9 +21,12 @@
      (if (> (rand 100) 90.0)
        (do
          (println "stopping clock.")
-         ;; this is not working!!
-         (reduced nil))
+         (reduced nil)) ;; we could return anything here. what counts is the reducing function must return (reduced)
        v))))
 
-(m/? (m/reduce println stopping-clock))
+(defn print-while-not-reduced [s v]
+  (println "value: " v)
+  v)
+
+(m/? (m/reduce print-while-not-reduced nil stopping-clock))
 
